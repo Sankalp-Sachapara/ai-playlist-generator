@@ -15,18 +15,33 @@ const PlaylistForm = ({ setTracks }) => {
     }
   };
 
+  const handleMoodChange = (e) => {
+    setMood(e.target.value);
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Enter your mood:
-        <input
-          type="text"
-          value={mood}
-          onChange={(e) => setMood(e.target.value)}
-          placeholder="e.g., happy, sad, energetic"
-        />
-      </label>
-      <button type="submit">Generate Playlist</button>
+    <form className="playlist-form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        className="playlist-input"
+        value={mood}
+        onChange={handleMoodChange}
+        placeholder="Enter your mood"
+      />
+      <select className="playlist-select" value={mood} onChange={handleMoodChange}>
+        <option value="">Select a mood</option>
+        <option value="happy">Happy</option>
+        <option value="sad">Sad</option>
+        <option value="energetic">Energetic</option>
+        <option value="chill">Chill</option>
+        <option value="romantic">Romantic</option>
+        <option value="party">Party</option>
+        <option value="focus">Focus</option>
+        <option value="sleep">Sleep</option>
+      </select>
+      <button className="playlist-button" type="submit">
+        Generate Playlist
+      </button>
     </form>
   );
 };

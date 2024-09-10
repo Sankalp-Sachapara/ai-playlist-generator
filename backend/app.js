@@ -1,38 +1,13 @@
 const express = require('express');
-const SpotifyWebApi = require('spotify-web-api-node');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const spotifyApi = require('./spotify'); // Import the Spotify API configuration
+const playlistRoutes = require('./routes/playlist'); // Import the playlist route
+const cors = require('cors');  // Import the cors package
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 
-// Spotify API setup
-const spotifyApi = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_CLIENT_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_SECRET
-});
-
-spotifyApi.clientCredentialsGrant().then(
-  function(data) {
-    console.log('The access token expires in ' + data.body['expires_in']);
-    console.log('The access token is ' + data.body['access_token']);
-
-    // Save the access token so that it can be used in future requests
-    spotifyApi.setAccessToken(data.body['access_token']);
-  },
-  function(err) {
-    console.log('Something went wrong when retrieving an access token', err);
-  }
-);
-
-// Test route
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
-
-// Import and use playlist routes
-const playlistRoutes = require('./routes/playlist');
+// Use the playlist routes
 app.use('/api/playlist', playlistRoutes);
 
 const PORT = process.env.PORT || 5000;
