@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const spotifyApi = require('../spotify'); // Import the configured Spotify API
+const spotifyApi = require('../spotify');
+const { analyzeSentiment } = require('../sentiment');
 
+// Helper function to shuffle an array
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -9,16 +11,30 @@ function shuffleArray(array) {
   }
 }
 
-// POST /api/playlist/generate
 router.post('/generate', async (req, res) => {
-  const { mood } = req.body;
-  console.log("Received mood:", mood);
+  const { mood, text } = req.body;
+  let detectedMood = mood;
 
   try {
-    const genre = mapMoodToGenre(mood);
-    console.log("Mapped mood to genre:", genre);
+    // Analyze sentiment only if text is provided and mood is not explicitly set
+    if (!mood && text) {
+      const sentimentResult = await analyzeSentiment(text);
+      detectedMood = sentimentResult.label;  // Extract the label from the sentiment result
+      console.log(`Detected mood: ${detectedMood}`);
+    }
 
-    const data = await spotifyApi.searchTracks(`genre:${genre}`, { limit: 50 }); // Increase the limit to get more tracks
+    // Fallback in case no mood was detected
+    if (!detectedMood) {
+      detectedMood = 'neutral';
+    }
+
+    detectedMood = detectedMood.trim().toLowerCase();
+    console.log(`This one!! ${detectedMood}`);
+
+    const genre = mapMoodToGenre(detectedMood);
+    console.log(`Mapped mood to genre: ${genre}`);
+
+    const data = await spotifyApi.searchTracks(`genre:${genre}`, { limit: 50 });
     let tracks = data.body.tracks.items;
 
     // Shuffle the tracks array
@@ -34,14 +50,19 @@ router.post('/generate', async (req, res) => {
 
     res.json({ tracks });
   } catch (error) {
-    console.error('Error generating playlist:', error.message);
+    console.error('Error generating playlist:', error);
     res.status(500).send('Error generating playlist');
   }
 });
 
-
 function mapMoodToGenre(mood) {
   switch (mood.toLowerCase()) {
+    case 'positive':
+      return 'pop';
+    case 'negative':
+      return 'acoustic';
+    case 'neutral':
+      return 'indie';
     case 'happy':
       return 'pop';
     case 'sad':
@@ -59,6 +80,6 @@ function mapMoodToGenre(mood) {
     default:
       return 'pop';
   }
-}  
+}
 
 module.exports = router;
